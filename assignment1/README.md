@@ -45,13 +45,11 @@ so that the course staff can properly receive your submission.
 ### Submitting your assignment
 
 To submit:
-
-1. Visit 
+1) Visit 
 https://classroom.github.com/assignment-invitations/01305f94b6d896f24c01b081516051c3 
 and log in with your GitHub account; this will make a submission repository 
 `datasci-w266/your_username`
-
-2. Run `assignment1/submit.sh your_github_username` to submit
+2) Run `assignment1/submit.sh your_github_username` to submit
 
 If you get an error with the submit script, you can also submit by manually 
 pushing your solution to your submission repo.
