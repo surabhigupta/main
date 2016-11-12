@@ -27,7 +27,11 @@ def wordids_to_tensors(wordids, embedding_dim, vocab_size, seed=0):
     HINT: Look at tf.embedding_lookup(.).
     '''
     # START YOUR CODE
-    pass
+    ws = tf.Variable(tf.random_uniform([vocab_size, embedding_dim], -1.0, 1.0, seed=seed), dtype=tf.float32)
+    bs = tf.zeros_like(wordids, dtype=tf.float32)
+    w = tf.nn.embedding_lookup([ws], wordids)
+    
+    return w, bs, ws
 
     # END YOUR CODE
 
@@ -47,7 +51,17 @@ def example_weight(Xij, x_max, alpha):
       - A vector of corresponding weights.
     '''
     # START YOUR CODE
-    pass
+
+    if x_max == 0:
+        return
+    
+    condition = Xij < x_max
+    product = Xij/x_max
+
+    case1 = pow(product, alpha)
+    case2 = tf.ones_like(condition, dtype=tf.float32)
+    return tf.select(condition, case1, case2)
+        
     # END YOUR CODE
 
 
@@ -65,5 +79,13 @@ def loss(w, b, w_c, b_c, c):
       - loss |batch_size|: the loss of each example in the batch
     '''
     # START YOUR CODE
-    pass
+    
+    product = tf.matmul(w, tf.transpose(w_c))
+    loss = tf.square(product + b + b_c - tf.log(c))
+    weight = example_weight(c, 100.0, 0.75)
+    weighted_loss = weight * loss
+    reduced_loss = tf.reduce_min(weighted_loss, 1)
+
+    return reduced_loss
+        
     # END YOUR CODE

@@ -54,7 +54,6 @@ def fully_connected_layers(hidden_dims, x):
     #       your answer here only be a couple of lines long (mine is 4).
 
     # START YOUR CODE
-    print 'Hidden dims: %r, x: %r' % (hidden_dims, x)
     layer = x
     # hidden_dims: [10, 20, 100, 1]
     # x : 1 X 3, W : 3 X 10, layer : 1 X 10
@@ -62,7 +61,7 @@ def fully_connected_layers(hidden_dims, x):
     # x : 20 X 3, W : 3 X 100, layer : 20 X 100
     # x : 100 X 3, W : 3 X 1, layer : 100 X 1   
     for index, hidden_dim in enumerate(hidden_dims):
-        with tf.variable_scope("MyLayer" + str(index)):
+        with tf.variable_scope("Layer" + str(index)):
             layer = tf.nn.relu(affine_layer(hidden_dim, layer))
 
     return layer
@@ -104,8 +103,14 @@ def train_nn(X, y, X_test, hidden_dims, batch_size, num_epochs, learning_rate,
     # START YOUR CODE
 
     y_hat = fully_connected_layers(hidden_dims, x_ph)
-    loss = tf.nn.sigmoid_cross_entropy_with_logits(tf.reduce_mean(y_hat, 1), y_ph)
-    train_opt = tf.train.GradientDescentOptimizer(learning_rate=learning_rate, )
+    logits = tf.reduce_mean(y_hat, 1)
+    loss = tf.nn.sigmoid_cross_entropy_with_logits(logits, y_ph)
+
+    if (len(tf.trainable_variables()) == 0):
+        return;
+
+    train_opt = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+    train = train_opt.minimize(loss, global_step=global_step, var_list=tf.trainable_variables())
                                                                            
     # END YOUR CODE
 
@@ -124,7 +129,6 @@ def train_nn(X, y, X_test, hidden_dims, batch_size, num_epochs, learning_rate,
                   tf.gradients(loss, var), feed_dict={x_ph: X, y_ph: y})
 
     for epoch_num in xrange(num_epochs):
-        print 'Epoch num: ', epoch_num,
 
         for batch in xrange(0, X.shape[0], batch_size):
             X_batch = X[batch : batch + batch_size]
@@ -136,19 +140,27 @@ def train_nn(X, y, X_test, hidden_dims, batch_size, num_epochs, learning_rate,
             # You'll also want to run your training op.
             # START YOUR CODE
             
-            loss_value = sess.run(loss, feed_dict={x_ph: X_batch, y_ph: y_batch})
-            global_step_value = sess.run(global_step)
-            opt_op = train_opt.minimize(loss, global_step=global_step, var_list=tf.trainable_variables())
-            opt_op.run(session=sess, feed_dict={x_ph: X_batch, y_ph: y_batch})
+            if (len(tf.trainable_variables()) == 0):
+                return;
+            
+            loss_value, _, global_step_value = sess.run([loss, train, global_step], feed_dict={x_ph: X_batch, y_ph: y_batch})
+
             
             # END YOUR CODE
-        if epoch_num % 100 == 0:
-            print 'Step: ', global_step_value,'Loss:', loss_value
+        if epoch_num % 300 == 0:
+            print 'Step: ', global_step_value, 'Loss:', loss_value
             if verbose:
                 for var in tf.trainable_variables():
                     print var.name, sess.run(var)
                 print ''
     # Return your predictions.
     # START YOUR CODE
-    pass
+
+    pred_prob = tf.nn.sigmoid(logits)
+    pred = sess.run(pred_prob, feed_dict={x_ph:X_test})
+    summary_writer = tf.train.SummaryWriter("tf_summaries", sess.graph)
+    print "end"
+
+    return pred > 0.5
+
     # END YOUR CODE
